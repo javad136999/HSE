@@ -1,56 +1,77 @@
 <!doctype html>
-<html lang="fa" dir="rtl"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>شبیه‌سازی پراکندگی حادثه – HSE عسلویه</title>
+<html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>اتاق فرماندهی – پراکندگی و منابع</title>
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="/cats.js"></script><script src="/auth.js"></script>
 <style>
 *{box-sizing:border-box}body{margin:0;font-family:Vazirmatn,Tahoma,sans-serif;background:#071a2b;color:#e8f1f8;display:flex;flex-direction:column;height:100vh}
-header{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#06141f;border-bottom:3px solid #ff7a1a}
-header a{color:#e8f1f8;text-decoration:none;border:1px solid #1c4466;border-radius:8px;padding:4px 10px;font-size:13px}header h1{font-size:14px;margin:0}
-#ctl{display:flex;flex-wrap:wrap;gap:8px;padding:8px 12px;background:#0d2a43;font-size:13px;align-items:center}
-select,input,button{background:#0a2236;color:#e8f1f8;border:1px solid #1c4466;border-radius:8px;padding:5px 8px;font-family:inherit;width:auto}input{width:70px}
-#map{flex:1;min-height:300px}#info{padding:8px 12px;background:#0d2a43;font-size:12px;line-height:1.8}
-.w{color:#ffb347}
+header{display:flex;align-items:center;gap:8px;padding:8px 12px;background:#06141f;border-bottom:3px solid #ff7a1a}header h1{font-size:14px;margin:0}
+a.b,button,select,input{background:#0a2236;color:#e8f1f8;border:1px solid #1c4466;border-radius:8px;padding:5px 9px;font-family:inherit;text-decoration:none;font-size:12px}input{width:68px}
+#ctl{display:flex;flex-wrap:wrap;gap:8px;padding:6px 12px;background:#0d2a43;font-size:12px;align-items:center}
+#map{flex:1;min-height:260px}#info{padding:6px 12px;background:#0d2a43;font-size:11px;line-height:1.7}#res{max-height:38vh;overflow:auto;padding:8px 12px;background:#0a2236;font-size:12px}
+.si{transform:translate(-50%,-50%);background:#0d2a43;color:#fff;border:2px solid #ff7a1a;border-radius:10px;padding:1px 6px;font-size:12px;white-space:nowrap;display:inline-block}
+.ch{display:inline-block;background:#0d2a43;border:1px solid #1c4466;border-radius:8px;padding:2px 7px;margin:2px}
+.card{border:1px solid #1c4466;border-radius:10px;padding:7px;margin:6px 0;background:#0d2a43}.w{color:#ffb347}
 </style></head><body>
-<header><a href="/">→ بازگشت</a><h1>شبیه‌سازی پراکندگی گاز/دود – ویژه مدیران</h1></header>
+<header><a class="b" href="/">→ بازگشت</a><h1>اتاق فرماندهی – پراکندگی و منابع</h1><span style="margin-inline-start:auto"></span><a class="b" href="/admin.html">⚙ ادمین</a><button onclick="AUTH.logout()">خروج</button></header>
 <div id="ctl">
-<label>ماده <select id="mat"><option value="1500">H₂S</option><option value="1200">آمونیاک</option><option value="1000">LPG / گاز قابل اشتعال</option><option value="2000">کلر</option><option value="1500">دود آتش‌سوزی</option></select></label>
-<label>شدت <select id="rate"><option value=".5">کم</option><option value="1" selected>متوسط</option><option value="1.8">زیاد</option></select></label>
-<label>باد km/h <input id="ws" type="number" min="0"></label>
-<label>جهت باد (از) ° <input id="wd" type="number" min="0" max="360"></label>
+<select id="mat"><option value="1500">H₂S</option><option value="1200">آمونیاک</option><option value="1000">LPG</option><option value="2000">کلر</option><option value="1500">دود آتش</option></select>
+<select id="rate"><option value=".5">نشت کم</option><option value="1" selected>نشت متوسط</option><option value="1.8">نشت زیاد</option></select>
+<label>باد <input id="ws" type="number" min="0"> km/h</label><label>از <input id="wd" type="number" min="0" max="360">°</label>
 <button id="live">باد زنده</button><button id="sat">ماهواره/نقشه</button>
+<label>شعاع تجمیع <select id="rad"><option value="5">۵ km</option><option value="10" selected>۱۰ km</option><option value="20">۲۰ km</option><option value="50">۵۰ km</option></select></label>
 </div>
-<div id="map"></div>
-<div id="info">روی نقشه در محل حادثه کلیک کنید.</div>
+<div id="map"></div><div id="info">روی نقشه در محل حادثه کلیک کنید.</div><div id="res"></div>
 <script>
-const map=L.map('map').fitBounds([[27.35,52.35],[27.70,52.85]]); // محدوده تقریبی منطقه ویژه اقتصادی انرژی پارس (صنایع گازی و پتروشیمی)؛ با تغییر این مختصات قابل تنظیم است
+const $=i=>document.getElementById(i),COL=['#3498db','#9b59b6','#1abc9c'];
+const map=L.map('map').fitBounds([[27.35,52.35],[27.70,52.85]]);
 const osm=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(map);
 const sat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'Esri'});
-let isSat=false;document.getElementById('sat').onclick=()=>{isSat?(map.removeLayer(sat),osm.addTo(map)):(map.removeLayer(osm),sat.addTo(map));isSat=!isSat};
-const $=i=>document.getElementById(i);let src=null,layer=L.layerGroup().addTo(map);
+let isSat=false;$('sat').onclick=()=>{isSat?(map.removeLayer(sat),osm.addTo(map)):(map.removeLayer(osm),sat.addTo(map));isSat=!isSat};
+const plume=L.layerGroup().addTo(map),routes=L.layerGroup().addTo(map),siteLayer=L.layerGroup().addTo(map);
+let src=null,outer=[],cache=null,SITES=[],markers=[],seq=0;
+const off=(la,lo,dx,dy)=>[la+dy/111320,lo+dx/(111320*Math.cos(la*Math.PI/180))];
+function fan(la,lo,th,Ln,W){const u=[Math.sin(th),Math.cos(th)],p=[Math.cos(th),-Math.sin(th)],l=[],r=[];
+for(let i=0;i<=24;i++){const t=i/24,d=Ln*t,w=W*Math.sin(Math.PI*Math.pow(t,.6));
+l.push(off(la,lo,d*u[0]+w*p[0],d*u[1]+w*p[1]));r.push(off(la,lo,d*u[0]-w*p[0],d*u[1]-w*p[1]))}return l.concat(r.reverse())}
+function inPoly(p,poly){let c=false;for(let i=0,j=poly.length-1;i<poly.length;j=i++){const [yi,xi]=poly[i],[yj,xj]=poly[j];if((yi>p[0])!==(yj>p[0])&&p[1]<(xj-xi)*(p[0]-yi)/(yj-yi)+xi)c=!c}return c}
+const hav=(a,b,c,d)=>{const R=6371e3,r=Math.PI/180,x=Math.sin((c-a)*r/2)**2+Math.cos(a*r)*Math.cos(c*r)*Math.sin((d-b)*r/2)**2;return 2*R*Math.asin(Math.sqrt(x))};
 async function live(){try{const d=await (await fetch('/api/live')).json();$('ws').value=Math.round(d.wind_speed);$('wd').value=Math.round(d.wind_dir);draw()}catch(e){}}
 $('live').onclick=live;
-function off(lat,lon,dx,dy){return [lat+dy/111320,lon+dx/(111320*Math.cos(lat*Math.PI/180))]}
-function fan(lat,lon,th,L,W){const u=[Math.sin(th),Math.cos(th)],p=[Math.cos(th),-Math.sin(th)],l=[],r=[];
-for(let i=0;i<=24;i++){const t=i/24,d=L*t,w=W*Math.sin(Math.PI*Math.pow(t,.6));
-l.push(off(lat,lon,d*u[0]+w*p[0],d*u[1]+w*p[1]));r.push(off(lat,lon,d*u[0]-w*p[0],d*u[1]-w*p[1]))}
-return l.concat(r.reverse())}
-function draw(){if(!src)return;layer.clearLayers();
+function draw(){if(!src)return;plume.clearLayers();
 const ws=+$('ws').value||0,wd=+$('wd').value||0,base=+$('mat').value*+$('rate').value;
-const L=base*Math.min(2,Math.max(.6,10/Math.max(ws,3))),W=L*.28*Math.min(2,Math.max(.8,8/Math.max(ws,2)));
+const Ln=base*Math.min(2,Math.max(.6,10/Math.max(ws,3))),W=Ln*.28*Math.min(2,Math.max(.8,8/Math.max(ws,2)));
 const th=((wd+180)%360)*Math.PI/180,[la,lo]=src;
-[[1,'#e74c3c','خطر بالا'],[.7,'#e67e22','خطر متوسط'],[.4,'#f1c40f','هشدار']].forEach(([k,c,n])=>{});
-[[1,'#f1c40f'],[.7,'#e67e22'],[.4,'#e74c3c']].forEach(([k,c])=>L_(la,lo,th,L*k,W*k,c));
-function L_(a,b,t,l,w,c){L.constructor;layer.addLayer(window.L.polygon(fan(a,b,t,l,w),{color:c,weight:1,fillOpacity:.35}))}
-layer.addLayer(window.L.circleMarker(src,{radius:7,color:'#fff',fillColor:'#e74c3c',fillOpacity:1}));
+[[1,'#f1c40f'],[.7,'#e67e22'],[.4,'#e74c3c']].forEach(([k,c])=>plume.addLayer(L.polygon(fan(la,lo,th,Ln*k,W*k),{color:c,weight:1,fillOpacity:.35,interactive:false})));
+outer=fan(la,lo,th,Ln,W);
+plume.addLayer(L.circleMarker(src,{radius:7,color:'#fff',fillColor:'#e74c3c',fillOpacity:1,interactive:false}));
 const up=off(la,lo,-Math.sin(th)*900,-Math.cos(th)*900);
-layer.addLayer(window.L.polyline([src,up],{color:'#2ecc71',dashArray:'6 6',weight:3}));
-layer.addLayer(window.L.marker(up,{icon:window.L.divIcon({html:'<b style="color:#2ecc71;white-space:nowrap">⬆ جهت امن (بالادست باد)</b>',className:''})}));
-$('info').innerHTML=`باد از سمت <b>${Math.round(wd)}°</b> با <b>${Math.round(ws)} km/h</b> • حداکثر برد تخمینی منطقه‌ی هشدار: <b>${Math.round(L)} متر</b>.<br>برای تخلیه: عمود بر جهت باد یا به سمت بالادست (خط سبز) حرکت کنید.<br><span class="w">⚠ برآورد هندسی اولیه است، نه جایگزین ALOHA/PHAST یا تصمیم فرمانده صحنه.</span>`}
-const Lf=window.L;
-map.on('click',e=>{src=[e.latlng.lat,e.latlng.lng];draw()});
-['mat','rate','ws','wd'].forEach(i=>$(i).addEventListener('input',draw));
-live();
+plume.addLayer(L.polyline([src,up],{color:'#2ecc71',dashArray:'6 6',weight:3,interactive:false}));
+plume.addLayer(L.marker(up,{interactive:false,icon:L.divIcon({html:'<b style="color:#2ecc71;white-space:nowrap">⬆ جهت امن (بالادست باد)</b>',className:''})}));
+$('info').innerHTML=`باد از <b>${Math.round(wd)}°</b> با <b>${Math.round(ws)} km/h</b> • برد تخمینی منطقه‌ی هشدار: <b>${Math.round(Ln)} m</b> • <span class="w">⚠ برآورد هندسی اولیه، نه جایگزین ALOHA/PHAST یا تصمیم فرمانده صحنه.</span>`;
+if(cache)render()}
+function siteIcon(s){const h=map.getZoom()>=13?Object.entries(s.items).map(([k,q])=>`${CAT[k]?.i||'❔'}${q}`).join(' '):`🏭 ${esc(s.site)}`;return L.divIcon({className:'',iconSize:[0,0],html:`<div class="si">${h}</div>`})}
+function drawSites(){siteLayer.clearLayers();markers=SITES.map(s=>{const m=L.marker([s.lat,s.lon],{icon:siteIcon(s),bubblingMouseEvents:true}).bindTooltip(`<b>${esc(s.company)}</b> – ${esc(s.site)}<br>`+Object.entries(s.items).map(([k,q])=>`${CAT[k]?.i||'❔'} ${esc(CAT[k]?.n||k)}: ${q}`).join('<br>'));siteLayer.addLayer(m);return m})}
+map.on('zoomend',()=>markers.forEach((m,i)=>m.setIcon(siteIcon(SITES[i]))));
+async function loadRes(){const r=await AUTH.api('/api/resources');const rows=await r.json(),m={};
+rows.forEach(x=>{const k=x.company+'|'+x.site;(m[k]??={company:x.company,site:x.site,lat:x.lat,lon:x.lon,items:{}}).items[x.category]=x.qty});SITES=Object.values(m);drawSites();render()}
+async function route(s){try{const c=new AbortController();setTimeout(()=>c.abort(),7000);
+const r=await fetch(`https://router.project-osrm.org/route/v1/driving/${s.lon},${s.lat};${src[1]},${src[0]}?overview=full&geometries=geojson`,{signal:c.signal});const o=(await r.json()).routes[0];
+return {d:o.distance,t:o.duration,g:o.geometry.coordinates.map(p=>[p[1],p[0]])}}catch(e){return null}}
+async function analyze(){routes.clearLayers();cache=null;if(!SITES.length)return render();const id=++seq;
+const list=SITES.map(s=>({...s,air:hav(src[0],src[1],s.lat,s.lon)})).sort((a,b)=>a.air-b.air),top=list.slice(0,3);
+$('res').textContent='در حال مسیریابی…';const rs=await Promise.all(top.map(route));if(id!==seq)return;
+top.forEach((s,i)=>{s.r=rs[i];routes.addLayer(s.r?L.polyline(s.r.g,{color:COL[i],weight:4}):L.polyline([[s.lat,s.lon],src],{color:COL[i],dashArray:'4 6'}))});
+cache={list,top};render()}
+function render(){if(!cache){$('res').textContent=SITES.length?'روی نقشه کلیک کنید تا نزدیک‌ترین منابع و مسیرها نمایش داده شود.':'هنوز منبعی ثبت نشده است (از بخش ⚙ ادمین).';return}
+const R=+$('rad').value*1000,agg={};cache.list.filter(s=>s.air<=R).forEach(s=>Object.entries(s.items).forEach(([k,q])=>agg[k]=(agg[k]||0)+q));
+const a=Object.entries(agg).map(([k,q])=>`<span class="ch">${CAT[k]?.i||'❔'} ${esc(CAT[k]?.n||k)}: <b>${q}</b></span>`).join('')||'منبعی در این شعاع نیست';
+const t=cache.top.map((s,i)=>{const bad=outer.length&&inPoly([s.lat,s.lon],outer);
+return `<div class="card" style="border-color:${COL[i]}"><b style="color:${COL[i]}">${i+1}. ${esc(s.company)} – ${esc(s.site)}</b> ${s.r?`• ${(s.r.d/1000).toFixed(1)} km • ≈${Math.round(s.r.t/60)} دقیقه`:`• خط مستقیم ${(s.air/1000).toFixed(1)} km (مسیریابی در دسترس نیست)`}${bad?'<br><span class="w">⚠ این سایت داخل محدوده‌ی احتمالی ابر است؛ از سمت بالادست باد نزدیک شوید.</span>':''}<div>${Object.entries(s.items).map(([k,q])=>`<span class="ch">${CAT[k]?.i||'❔'} ${q}</span>`).join('')}</div></div>`}).join('');
+$('res').innerHTML=`<b>تجمیع منابع در شعاع ${$('rad').value} km:</b><div>${a}</div><b>نزدیک‌ترین سایت‌ها و مسیر:</b>${t}`}
+map.on('click',e=>{src=[e.latlng.lat,e.latlng.lng];draw();analyze()});
+['mat','rate','ws','wd'].forEach(i=>$(i).addEventListener('input',draw));$('rad').onchange=render;
+(async()=>{await AUTH.ensure();loadRes();live()})();
 </script></body></html>

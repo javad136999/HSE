@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>مدیریت منابع – سامانه هوشمند پایش برخط هوای محیطی</title>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="/cats.js"></script><script src="/auth.js"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Vazirmatn,Tahoma,sans-serif;background:#071a2b;color:#e8f1f8}
+header{display:flex;gap:10px;align-items:center;padding:10px 14px;background:#06141f;border-bottom:3px solid #ff7a1a}header h1{font-size:14px;margin:0}
+a.b,button{background:#0a2236;color:#e8f1f8;border:1px solid #1c4466;border-radius:8px;padding:6px 12px;font-family:inherit;text-decoration:none;font-size:13px;cursor:pointer}
+button.p{background:#ff7a1a;border-color:#ff7a1a;font-weight:700}button.d{border-color:#e74c3c;color:#ff8a80}
+main{display:grid;gap:12px;padding:12px;max-width:1100px;margin:auto;grid-template-columns:repeat(auto-fit,minmax(310px,1fr))}
+.c{background:#0d2a43;border:1px solid #1c4466;border-radius:14px;padding:12px}.c h2{font-size:14px;margin:0 0 8px;color:#8fb0c9}
+input{background:#0a2236;color:#fff;border:1px solid #1c4466;border-radius:8px;padding:7px;font-family:inherit;width:100%}
+.f{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}#map{height:300px;border-radius:10px;margin-bottom:8px}
+#cats{display:grid;grid-template-columns:1fr 1fr;gap:6px}#cats label{display:flex;align-items:center;gap:6px;background:#0a2236;border-radius:8px;padding:5px 8px;font-size:12px}#cats input{width:64px;margin-inline-start:auto}
+.s{background:#0a2236;border-radius:10px;padding:8px;margin-bottom:8px;font-size:12px}.s div{margin:4px 0}
+</style></head><body>
+<header><a class="b" href="/plume.html">→ اتاق فرماندهی</a><h1>مدیریت منابع شرکت‌ها (ادمین)</h1><button style="margin-inline-start:auto" onclick="AUTH.logout()">خروج</button></header>
+<main>
+<section class="c"><h2>📍 ثبت / ویرایش منابع یک سایت</h2>
+<div id="map"></div>
+<div class="f"><input id="company" list="cl" placeholder="نام شرکت (مثلاً پتروشیمی بوشهر)"><input id="site" placeholder="نام سایت/ایستگاه آتش‌نشانی"></div><datalist id="cl"></datalist>
+<div class="f"><input id="lat" placeholder="عرض جغرافیایی (روی نقشه کلیک کنید)" type="number" step="any"><input id="lon" placeholder="طول جغرافیایی" type="number" step="any"></div>
+<div id="cats"></div>
+<div style="display:flex;gap:8px;margin-top:10px"><button class="p" onclick="save()">ذخیره</button><button onclick="reset()">سایت جدید</button><small id="st" style="align-self:center"></small></div></section>
+<section class="c"><h2>🏭 سایت‌های ثبت‌شده</h2><div id="list">…</div></section>
+</main>
+<script>
+const $=i=>document.getElementById(i);let SITES=[],orig=null,pin=null;
+const map=L.map('map').fitBounds([[27.35,52.35],[27.70,52.85]]);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(map);
+const others=L.layerGroup().addTo(map);
+function setPin(la,lo){$('lat').value=(+la).toFixed(6);$('lon').value=(+lo).toFixed(6);pin?pin.setLatLng([la,lo]):pin=L.marker([la,lo]).addTo(map)}
+map.on('click',e=>setPin(e.latlng.lat,e.latlng.lng));
+['lat','lon'].forEach(i=>$(i).addEventListener('change',()=>$('lat').value&&$('lon').value&&setPin($('lat').value,$('lon').value)));
+$('cats').innerHTML=CATS.map(c=>`<label>${c.i} ${c.n}<input type="number" min="0" id="q_${c.k}" placeholder="0"></label>`).join('');
+function reset(){orig=null;['company','site','lat','lon'].forEach(i=>$(i).value='');CATS.forEach(c=>$('q_'+c.k).value='');pin&&(map.removeLayer(pin),pin=null);$('st').textContent=''}
+async function load(){const r=await AUTH.api('/api/resources');const rows=await r.json();const m={};
+rows.forEach(x=>{const k=x.company+'|'+x.site;(m[k]??={company:x.company,site:x.site,lat:x.lat,lon:x.lon,items:{}}).items[x.category]=x.qty});SITES=Object.values(m);
+$('cl').innerHTML=[...new Set(SITES.map(s=>s.company))].map(c=>`<option value="${esc(c)}">`).join('');
+others.clearLayers();SITES.forEach(s=>L.circleMarker([s.lat,s.lon],{radius:6,color:'#ff7a1a'}).addTo(others));
+$('list').innerHTML=SITES.length?SITES.map((s,i)=>`<div class="s"><b>${esc(s.company)}</b> – ${esc(s.site)}<div>${Object.entries(s.items).map(([k,q])=>`${CAT[k]?.i||'❔'} ${q}`).join(' &nbsp; ')}</div><button onclick="edit(${i})">ویرایش</button> <button class="d" onclick="del(${i})">حذف</button></div>`).join(''):'هنوز سایتی ثبت نشده است.'}
+function edit(i){const s=SITES[i];orig={company:s.company,site:s.site};$('company').value=s.company;$('site').value=s.site;setPin(s.lat,s.lon);map.setView([s.lat,s.lon],13);CATS.forEach(c=>$('q_'+c.k).value=s.items[c.k]||'');scrollTo(0,0)}
+async function del(i){const s=SITES[i];if(!confirm('حذف '+s.site+'؟'))return;await AUTH.api(`/api/resources?company=${encodeURIComponent(s.company)}&site=${encodeURIComponent(s.site)}`,{method:'DELETE'});load()}
+async function save(){const items={};CATS.forEach(c=>{const v=+$('q_'+c.k).value;if(v>0)items[c.k]=v});
+const b={orig,company:$('company').value,site:$('site').value,lat:$('lat').value,lon:$('lon').value,items};
+if(!b.company||!b.site||!b.lat||!b.lon)return $('st').textContent='شرکت، سایت و موقعیت را کامل کنید';
+const r=await AUTH.api('/api/resources',{method:'POST',body:JSON.stringify(b)});$('st').textContent=r.ok?'✔ ذخیره شد':'خطا در ذخیره';if(r.ok){reset();load()}}
+(async()=>{await AUTH.ensure('admin');load()})();
+</script></body></html>

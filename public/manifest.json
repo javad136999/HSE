@@ -1,1 +1,16 @@
-{ "name": "HSE عسلویه", "short_name": "HSE", "start_url": "/", "display": "standalone", "dir": "rtl", "lang": "fa", "background_color": "#071a2b", "theme_color": "#071a2b", "icons": [] }
+{
+  "id": "/",
+  "name": "سامانه هوشمند پایش برخط هوای محیطی",
+  "short_name": "پایش هوا",
+  "description": "شرکت بهداشت ایمنی و محیط زیست پتروشیمی‌های عسلویه",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "dir": "rtl",
+  "lang": "fa",
+  "background_color": "#071a2b",
+  "theme_color": "#071a2b",
+  "icons": [
+    { "src": "/icon-512.png", "sizes": "192x192 512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

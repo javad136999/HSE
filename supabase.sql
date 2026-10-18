@@ -15,3 +15,14 @@ create table if not exists aqi_monthly (
   created_at timestamptz default now()
 );
 alter table aqi_monthly enable row level security;
+
+-- منابع آتش‌نشانی و امدادی شرکت‌ها (برای نقشه‌ی اتاق فرماندهی)
+create table if not exists fire_resources (
+  id bigserial primary key,
+  company text not null, site text not null,
+  lat double precision not null, lon double precision not null,
+  category text not null, qty int not null check (qty > 0),
+  updated_at timestamptz default now(),
+  unique (company, site, category)
+);
+alter table fire_resources enable row level security;

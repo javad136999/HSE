@@ -1,56 +1,89 @@
 <!doctype html>
-<html lang="fa" dir="rtl"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1"><link rel="manifest" href="/manifest.json">
-<title>سامانه HSE پتروشیمی عسلویه</title>
+<html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#071a2b"><link rel="icon" href="/icon-512.png"><link rel="apple-touch-icon" href="/icon-512.png">
+<title>سامانه هوشمند پایش برخط هوای محیطی</title>
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-:root{--bg:#071a2b;--card:#0d2a43;--line:#1c4466;--tx:#e8f1f8;--mut:#8fb0c9;--acc:#ff7a1a;--ok:#2ecc71}
+:root{--bg:#071a2b;--card:#0d2a43;--line:#1c4466;--tx:#e8f1f8;--mut:#8fb0c9;--acc:#ff7a1a}
 *{box-sizing:border-box}body{margin:0;font-family:Vazirmatn,Tahoma,sans-serif;background:radial-gradient(circle at 80% -10%,#124a73,var(--bg) 60%);color:var(--tx);min-height:100vh}
 header{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:3px solid var(--acc);background:#06141f}
-.logo{width:42px;height:42px;border-radius:10px;background:linear-gradient(135deg,var(--acc),#c4410c);display:grid;place-items:center;font-weight:900}
-header h1{font-size:15px;margin:0}header small{color:var(--mut)}
-#alert{display:none;position:sticky;top:0;z-index:9;padding:12px 16px;font-weight:700;text-align:center;color:#fff;animation:p 1.5s infinite}
-@keyframes p{50%{filter:brightness(1.3)}}
+.logo{height:50px;width:auto;border-radius:10px;background:#fff;padding:3px}
+header h1{font-size:16px;margin:0}header small{color:var(--mut)}
+#alert{display:none;position:sticky;top:0;z-index:9;padding:12px 16px;color:#fff;text-align:center;line-height:1.8}#alert b{font-size:16px}
 main{max-width:980px;margin:auto;padding:14px;display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(290px,1fr))}
-.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
-.card h2{margin:0 0 10px;font-size:14px;color:var(--mut)}
-.big{font-size:54px;font-weight:900;line-height:1}.row{display:flex;justify-content:space-between;gap:8px;margin:6px 0;font-size:14px}
-.wind{grid-column:1/-1;border-color:var(--acc)}.wgrid{display:flex;flex-wrap:wrap;gap:18px;align-items:center;justify-content:space-around}
-.pol{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.pol div{background:#0a2236;border-radius:10px;padding:8px;text-align:center;font-size:12px}.pol b{display:block;font-size:16px}
-.bad{outline:2px solid #e74c3c}button,select{background:#0a2236;color:var(--tx);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-family:inherit}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}.card h2{margin:0 0 10px;font-size:14px;color:var(--mut)}
+.full{grid-column:1/-1}.big{font-size:56px;font-weight:900;line-height:1}.row{display:flex;justify-content:space-between;gap:8px;margin:6px 0;font-size:14px}
+.scale{display:flex;gap:3px;margin:10px 0}.scale div{flex:1;height:10px;border-radius:5px;opacity:.35}.scale div.on{opacity:1;height:14px;margin-top:-2px}
+.pol{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-top:10px}.pol div{background:#0a2236;border-radius:10px;padding:8px;text-align:center;font-size:12px;border:2px solid #2ecc71}.pol div.bad{border-color:#e74c3c}.pol b{display:block;font-size:16px}
+.wgrid{display:flex;flex-wrap:wrap;gap:18px;align-items:center;justify-content:space-around}
+a.ic,button,select{background:#0a2236;color:var(--tx);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-family:inherit;text-decoration:none}
+#chg{display:none;position:sticky;top:0;z-index:10;padding:12px 40px 12px 16px;color:#fff;text-align:center;line-height:1.8;border-bottom:3px solid #fff}#chg button{position:absolute;inset-inline-end:8px;top:8px;background:#0003;border:0;color:#fff;font-size:18px}#chg b{font-size:16px}
+#inst{border-color:#ff7a1a;background:#ff7a1a;color:#fff;font-weight:700;animation:beat 1.2s infinite;transition:opacity .6s,transform .6s}#inst.gone{opacity:0;transform:scale(.6);animation:none;pointer-events:none}
+@keyframes beat{0%,100%{transform:scale(1);box-shadow:0 0 0 0 #ff7a1a88}15%{transform:scale(1.13)}30%{transform:scale(1)}45%{transform:scale(1.13);box-shadow:0 0 0 10px #ff7a1a00}}
 canvas{max-height:260px}footer{text-align:center;color:var(--mut);font-size:11px;padding:16px}
 </style></head><body>
-<div id="alert"></div>
-<header><div class="logo">HSE</div><div><h1>سامانه ایمنی، بهداشت و محیط زیست – پتروشیمی عسلویه</h1><small>آتش‌نشانی • مدیریت بحران • HSE</small></div><a href="/plume.html" title="شبیه‌سازی پراکندگی حادثه (ویژه مدیران)" style="margin-inline-start:auto;width:40px;height:40px;border-radius:10px;border:1px solid var(--line);display:grid;place-items:center;text-decoration:none;font-size:20px;background:#0a2236">🗺️</a></header>
+<div id="chg"></div><div id="alert"></div>
+<header><img class="logo" src="/logo.png" alt="HSE"><div><h1>سامانه هوشمند پایش برخط هوای محیطی</h1><small>شرکت بهداشت ایمنی و محیط زیست پتروشیمی‌های عسلویه</small></div>
+<button id="inst" hidden>⬇ نصب برنامه</button><a class="ic" href="/plume.html" title="اتاق فرماندهی (ویژه مدیران)" style="margin-inline-start:auto;font-size:20px">🗺️</a></header>
 <main>
-<section class="card wind"><h2>🌬️ وضعیت باد – شرایط اضطراری</h2><div class="wgrid">
+<section class="card full"><h2>🏭 شاخص کیفیت هوا (AQI)</h2>
+<div style="display:flex;flex-wrap:wrap;gap:20px;align-items:center"><div><div class="big" id="aqi">–</div><div id="lvl" style="font-weight:700;margin-top:6px"></div><div id="dom" style="color:var(--mut);font-size:13px"></div></div>
+<div style="flex:1;min-width:260px"><canvas id="pc"></canvas></div></div>
+<div class="scale" id="scale"></div><div class="pol" id="pol"></div></section>
+<section class="card full"><h2>🌬️ وضعیت باد – شرایط اضطراری</h2><div class="wgrid">
 <svg id="compass" width="190" height="190" viewBox="-100 -100 200 200"><circle r="92" fill="none" stroke="#1c4466" stroke-width="3"/><g fill="#8fb0c9" font-size="13" text-anchor="middle"><text y="-76">N</text><text y="86">S</text><text x="80" y="5">E</text><text x="-80" y="5">W</text></g><g id="arrow"><path d="M0 -62 L12 20 L0 8 L-12 20Z" fill="#ff7a1a"/></g></svg>
 <div><div class="big"><span id="ws">–</span><small style="font-size:16px"> km/h</small></div><div class="row"><span>جهت وزش (از سمت)</span><b id="wd">–</b></div><div class="row"><span>جهت حرکت آلاینده‌ها</span><b id="wto">–</b></div><div class="row"><span>تندباد</span><b id="wg">–</b></div></div></div></section>
 <section class="card"><h2>🌡️ آب‌وهوا</h2><div class="big" id="t">–</div><div class="row"><span>وضعیت</span><b id="wc">–</b></div><div class="row"><span>رطوبت</span><b id="hu">–</b></div><div class="row"><span>فشار</span><b id="pr">–</b></div></section>
-<section class="card"><h2>🏭 شاخص کیفیت هوا (AQI)</h2><div class="big" id="aqi">–</div><div id="aqil" class="row"></div><div class="pol" id="pol" style="margin-top:10px"></div></section>
-<section class="card" style="grid-column:1/-1"><h2>📈 گزارش ماهانه روند AQI</h2><div class="row"><select id="mon"></select><button onclick="rep()">نمایش</button><button onclick="window.print()">چاپ/PDF</button></div><div id="sum" class="row"></div><canvas id="ch"></canvas></section>
-<section class="card" style="grid-column:1/-1"><button onclick="Notification.requestPermission().then(()=>go())">🔔 فعال‌سازی اعلان AQI</button> <small style="color:var(--mut)">اعلان فقط برای عبور AQI از حد استاندارد (۱۰۰) است.</small></section>
+<section class="card"><h2>🔔 اعلان</h2><button onclick="Notification.requestPermission().then(()=>go())">فعال‌سازی اعلان سطح AQI</button><p style="font-size:12px;color:var(--mut)">با هر تغییر سطح کیفیت هوا (از عالی تا خطرناک)، اعلانی با رنگ و توصیه‌ی بهداشتی همان سطح نمایش داده می‌شود.</p></section>
+<section class="card full"><h2>📈 گزارش ماهانه روند AQI</h2><div class="row"><select id="mon"></select><button onclick="rep()">نمایش</button><button onclick="window.print()">چاپ/PDF</button></div><div id="sum" class="row"></div><canvas id="ch"></canvas></section>
 </main><footer>منبع: Open-Meteo (آب‌وهوا و کیفیت هوا) – به‌روزرسانی هر ۱۰ دقیقه</footer>
 <script>
-const LIMIT=100,N={pm25:'PM2.5',pm10:'PM10',o3:'ازن (O₃)',no2:'NO₂',so2:'SO₂',co:'CO'};
+const LIMIT=100,N={pm25:['PM2.5','µg/m³'],pm10:['PM10','µg/m³'],o3:['ازن (O₃)','µg/m³'],no2:['NO₂','µg/m³'],so2:['SO₂','µg/m³'],co:['CO','µg/m³']};
+const LV=[
+{max:50,n:'عالی',c:'#2ecc71',e:'🟢',a:'کیفیت هوا عالی است. هیچ محدودیتی برای فعالیت در فضای باز وجود ندارد.'},
+{max:100,n:'مطلوب (قابل قبول)',c:'#f1c40f',e:'🟡',a:'کیفیت هوا قابل قبول است. افراد بسیار حساس به آلودگی، فعالیت طولانی و سنگین در فضای باز را با دقت انجام دهند.'},
+{max:150,n:'ناسالم برای گروه‌های حساس',c:'#e67e22',e:'🟠',a:'کودکان، سالمندان، باردار و بیماران قلبی/تنفسی فعالیت بیرون را کم کنند. سایر افراد در صورت علائم تنفسی فعالیت سنگین را محدود کنند.'},
+{max:200,n:'ناسالم',c:'#e74c3c',e:'🔴',a:'همه از فعالیت سنگین و طولانی در فضای باز بپرهیزند. استفاده از ماسک N95/FFP2 توصیه می‌شود و گروه‌های حساس در محیط بسته بمانند.'},
+{max:300,n:'بسیار ناسالم',c:'#8e44ad',e:'🟣',a:'فعالیت در فضای باز را به حداقل برسانید، از ماسک تنفسی مناسب استفاده کنید، پنجره‌ها را ببندید و در صورت علائم به مرکز درمانی مراجعه کنید.'},
+{max:1e9,n:'خطرناک',c:'#7b1e2b',e:'🟤',a:'وضعیت اضطراری سلامت: از فضای باز خارج نشوید، پنجره‌ها و تهویه را ببندید، از ماسک مناسب استفاده کنید و دستورهای مدیریت بحران را دنبال کنید.'}];
+const lvl=a=>{const i=LV.findIndex(l=>a<=l.max);return [LV[i],i]};
 const DIR=['شمال','شمال‌شرق','شرق','جنوب‌شرق','جنوب','جنوب‌غرب','غرب','شمال‌غرب'],dn=d=>DIR[Math.round(d/45)%8];
 const WC=c=>c==0?'صاف':c<4?'نیمه‌ابری':c<50?'مه/غبار':c<70?'بارانی':c<80?'برفی':'رعد و برق';
-const lvl=a=>a<=50?['مطلوب','#2ecc71']:a<=100?['قابل قبول','#f1c40f']:a<=150?['ناسالم برای گروه‌های حساس','#e67e22']:a<=200?['ناسالم','#e74c3c']:['بسیار ناسالم','#8e44ad'];
-const $=i=>document.getElementById(i);
+const $=i=>document.getElementById(i);let pc;
+$('scale').innerHTML=LV.map(l=>`<div title="${l.n}" style="background:${l.c}"></div>`).join('');
 async function go(){try{const d=await (await fetch('/api/live')).json();
 $('ws').textContent=Math.round(d.wind_speed);$('wd').textContent=dn(d.wind_dir)+' ('+Math.round(d.wind_dir)+'°)';$('wto').textContent=dn(d.wind_dir+180)+' ('+Math.round((d.wind_dir+180)%360)+'°)';$('wg').textContent=Math.round(d.gust)+' km/h';
 $('arrow').setAttribute('transform','rotate('+(d.wind_dir+180)+')');
 $('t').textContent=Math.round(d.temp)+'°C';$('wc').textContent=WC(d.code);$('hu').textContent=d.humidity+'%';$('pr').textContent=Math.round(d.pressure)+' hPa';
-const [l,c]=lvl(d.aqi);$('aqi').textContent=d.aqi;$('aqi').style.color=c;$('aqil').innerHTML='<span>'+l+'</span><b>پارامتر غالب: '+N[d.dominant]+'</b>';
-$('pol').innerHTML=Object.keys(N).map(k=>`<div class="${d.sub[k]>LIMIT?'bad':''}">${N[k]}<b>${d[k]??'–'}</b>AQI ${d.sub[k]??'–'}</div>`).join('');
-const bad=Object.keys(N).filter(k=>d.sub[k]>LIMIT).map(k=>N[k]);
-const a=$('alert');if(d.aqi>LIMIT){a.style.display='block';a.style.background=c;a.textContent='⚠️ هشدار AQI='+d.aqi+' – پارامتر(های) بالاتر از حد: '+(bad.join('، ')||N[d.dominant]);
-const key='n'+new Date().toDateString();if(Notification.permission==='granted'&&!localStorage[key]){localStorage[key]=1;new Notification('هشدار کیفیت هوای عسلویه',{body:a.textContent})}}else a.style.display='none';
+const [L,i]=lvl(d.aqi);$('aqi').textContent=d.aqi;$('aqi').style.color=L.c;$('lvl').textContent=L.e+' '+L.n;$('lvl').style.color=L.c;$('dom').textContent='پارامتر غالب: '+N[d.dominant][0];
+[...$('scale').children].forEach((x,k)=>x.classList.toggle('on',k==i));
+const ks=Object.keys(N),vals=ks.map(k=>d.sub[k]??0);
+$('pol').innerHTML=ks.map(k=>`<div class="${d.sub[k]>LIMIT?'bad':''}">${N[k][0]}<b>${d[k]??'–'}</b><small>${N[k][1]} • AQI ${d.sub[k]??'–'}</small></div>`).join('');
+const cols=vals.map(v=>v>LIMIT?'#e74c3c':'#2ecc71');
+if(pc){pc.data.datasets[0].data=vals;pc.data.datasets[0].backgroundColor=cols;pc.update()}else pc=new Chart($('pc'),{data:{labels:ks.map(k=>N[k][0]),datasets:[{type:'bar',label:'AQI هر پارامتر',data:vals,backgroundColor:cols},{type:'line',label:'حد استاندارد (۱۰۰)',data:ks.map(()=>LIMIT),borderColor:'#f1c40f',borderDash:[6,4],pointRadius:0}]},options:{plugins:{legend:{labels:{color:'#e8f1f8'}}},scales:{x:{ticks:{color:'#8fb0c9'}},y:{beginAtZero:true,ticks:{color:'#8fb0c9'}}}}});
+const bad=ks.filter(k=>d.sub[k]>LIMIT).map(k=>N[k][0]);
+const msg=`${L.e} سطح «${L.n}» – AQI ${d.aqi}${bad.length?' – پارامتر(های) خارج از حد: '+bad.join('، '):''}`;
+const a=$('alert');a.style.display='block';a.style.background=L.c;a.innerHTML=`<b>${msg}</b><br>${L.a}`;
+const prev=localStorage.lastLvl;
+if(prev!==String(i)){localStorage.lastLvl=i;
+const t='شاخص کیفی هوا وارد محدوده «'+L.n+'» شد';
+if(prev!==undefined)localStorage.chg=JSON.stringify({ts:Date.now(),c:L.c,html:'<b>'+L.e+' '+t+' (AQI '+d.aqi+')</b><br>'+(bad.length?'پارامتر(های) خارج از حد: '+bad.join('، ')+'<br>':'')+'توصیه‌ی بهداشتی: '+L.a});
+if(Notification.permission==='granted'){const o={body:'AQI '+d.aqi+(bad.length?' – '+bad.join('، '):'')+'\n'+L.a,icon:'/icon-512.png',tag:'aqi-level',dir:'rtl',lang:'fa'};
+if(navigator.serviceWorker)navigator.serviceWorker.ready.then(r=>r.showNotification(L.e+' '+t,o));else new Notification(L.e+' '+t,o)}}
+showChg();
 }catch(e){console.error(e)}}
 let chart;async function rep(){const r=await (await fetch('/api/report?month='+$('mon').value)).json();
 $('sum').innerHTML=`<span>میانگین: <b>${r.avg??'–'}</b></span><span>بیشینه: <b>${r.max??'–'}</b></span><span>ساعت‌های فراتر از حد: <b>${r.exceedHours}</b></span><span>نمونه‌ها: <b>${r.count}</b></span>`;
-chart&&chart.destroy();chart=new Chart($('ch'),{type:'line',data:{labels:r.daily.map(x=>x.date.slice(5)),datasets:[{label:'میانگین روزانه',data:r.daily.map(x=>x.avg),borderColor:'#ff7a1a',tension:.3},{label:'بیشینه روزانه',data:r.daily.map(x=>x.max),borderColor:'#e74c3c',borderDash:[5,4],tension:.3},{label:'حد استاندارد',data:r.daily.map(()=>LIMIT),borderColor:'#2ecc71',pointRadius:0}]},options:{plugins:{legend:{labels:{color:'#e8f1f8'}}},scales:{x:{ticks:{color:'#8fb0c9'}},y:{ticks:{color:'#8fb0c9'}}}}})}
+chart&&chart.destroy();chart=new Chart($('ch'),{data:{labels:r.daily.map(x=>x.date.slice(5)),datasets:[{type:'line',label:'میانگین روزانه',data:r.daily.map(x=>x.avg),borderColor:'#ff7a1a',tension:.3},{type:'line',label:'بیشینه روزانه',data:r.daily.map(x=>x.max),borderColor:'#e74c3c',borderDash:[5,4],tension:.3},{type:'line',label:'حد استاندارد',data:r.daily.map(()=>LIMIT),borderColor:'#2ecc71',pointRadius:0}]},options:{plugins:{legend:{labels:{color:'#e8f1f8'}}},scales:{x:{ticks:{color:'#8fb0c9'}},y:{ticks:{color:'#8fb0c9'}}}}})}
 const now=new Date();for(let i=0;i<12;i++){const x=new Date(now.getFullYear(),now.getMonth()-i,1),v=x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0');$('mon').add(new Option(v,v))}
+function showChg(){let c;try{c=JSON.parse(localStorage.chg||'null')}catch(e){}const b=$('chg');
+if(c&&Date.now()-c.ts<216e5&&localStorage.chgX!==String(c.ts)){b.style.display='block';b.style.background=c.c;b.innerHTML=c.html+'<button onclick="localStorage.chgX=JSON.parse(localStorage.chg).ts;$(\'chg\').style.display=\'none\'">×</button>'}else b.style.display='none'}
+if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js');
+let dp=null;const ib=$('inst'),ios=/iphone|ipad|ipod/i.test(navigator.userAgent),standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+const hideInst=()=>{ib.classList.add('gone');setTimeout(()=>ib.hidden=true,650)};
+if(!standalone&&ios)ib.hidden=false;
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e;if(!standalone)ib.hidden=false});
+addEventListener('appinstalled',hideInst);
+ib.onclick=async()=>{if(dp){dp.prompt();const r=await dp.userChoice;dp=null;if(r.outcome==='accepted')hideInst()}else alert('برای نصب در آیفون/آیپد: دکمه‌ی اشتراک‌گذاری (Share) را بزنید و «Add to Home Screen» را انتخاب کنید.')};
 go();rep();setInterval(go,600000);
 </script></body></html>
